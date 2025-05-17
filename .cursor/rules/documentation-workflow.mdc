@@ -1,0 +1,39 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Documentation Processing Workflow
+
+This project follows a multi-stage documentation processing pipeline:
+
+## 1. PDF Processing
+- PDFs from `houdini_docs_pdf/` are processed using [pdf_to_markdown_converter.py](mdc:pdf_to_markdown_converter.py)
+- Output is stored in `PDF_to_Markdown/` directory
+- Maintains original directory structure for easy reference
+
+## 2. Documentation Crawling
+- Main crawler [app.py](mdc:app.py) processes Houdini documentation
+- ODForce crawler [app_odforce.py](mdc:app_odforce.py) handles forum content
+- Results stored in `houdini_docs_mkdown/` and `odforce_scrapMD/` respectively
+
+## 3. Content Chunking
+- [chunker.py](mdc:chunker.py) splits large documents into manageable pieces (only relevant for houdini documentation files)
+- Chunked content stored in `Chunked_Markdown/`
+- Preserves document hierarchy and relationships
+
+## 4. Dataset Generation
+- [optimized_generate_qna_dataset.py](mdc:optimized_generate_qna_dataset.py) processes chunked content
+- Creates structured Q&A pairs in `qna_dataset/`
+- Includes:
+  - `raw_md_files/` - Original markdown input
+  - `processed_text/` - Intermediate processing
+  - `output/` - Final Q&A dataset
+
+## Processing Order
+1. Run PDF conversion first
+2. Execute documentation crawlers
+3. Chunk the processed content
+4. Generate Q&A dataset
+
+

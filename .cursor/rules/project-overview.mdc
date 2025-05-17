@@ -1,0 +1,42 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Houdini Documentation Crawler Project Overview
+
+This project is a comprehensive documentation crawler and processor for Houdini-related content, consisting of several key components:
+
+## Core Components
+
+### Documentation Crawlers
+- [app.py](mdc:app.py) - Main documentation crawler application
+- [app_odforce.py](mdc:app_odforce.py) - Specialized crawler for ODForce forum content
+- [chunker.py](mdc:chunker.py) - Utility for chunking large documentation into manageable pieces
+
+### Document Converters
+- [pdf_to_markdown_converter.py](mdc:pdf_to_markdown_converter.py) - Converts PDF documentation to Markdown format
+- [markdownConverter_OLD.py](mdc:markdownConverter_OLD.py) - Legacy markdown conversion utility
+
+### Dataset Generation
+- [optimized_generate_qna_dataset.py](mdc:optimized_generate_qna_dataset.py) - Creates Q&A datasets from processed documentation
+
+## Directory Structure
+
+### Documentation Sources
+- `houdini_docs_mkdown/` - Markdown format Houdini documentation
+- `houdini_docs_pdf/` - Original PDF format documentation
+- `odforce_scrapMD/` - Scraped ODForce forum content
+- `markitdown/` - Markdown processing utilities
+
+### Processed Content
+- `Chunked_Markdown/` - Documentation split into manageable chunks
+- `PDF_to_Markdown/` - Converted PDF documentation
+- `qna_dataset/` - Generated Q&A datasets
+
+## Dependencies
+- [requirements.txt](mdc:requirements.txt) - Project dependencies and versions
+
+## Project Configuration
+- [workspace.code-workspace](mdc:workspace.code-workspace) - VS Code workspace configuration
+

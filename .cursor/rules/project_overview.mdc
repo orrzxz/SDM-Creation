@@ -1,0 +1,19 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Project Overview
+
+This project is designed to download, convert, and process Houdini documentation.
+
+It involves converting PDF documentation to Markdown format and potentially chunking or further processing the resulting Markdown files.
+
+Key directories include:
+- `houdini_docs_pdf`: Original Houdini documentation in PDF format.
+- `houdini_docs_mkdown`: Converted Houdini documentation in Markdown format.
+- `Chunked_Markdown`: Processed or chunked Markdown files.
+- `PDF_to_Markdown`: Contains the scripts for the conversion process.
+
+The main scripts are located in the workspace root.
+

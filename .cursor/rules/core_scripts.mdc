@@ -1,0 +1,13 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Core Scripts
+
+This project utilizes several key Python scripts located in the workspace root:
+
+- [`app.py`](mdc:app.py): Likely the main entry point for the application, potentially orchestrating the conversion and chunking processes.
+- [`pdf_to_markdown_converter.py`](mdc:pdf_to_markdown_converter.py): Contains the logic for converting PDF files found in `houdini_docs_pdf` to Markdown format, saving them in `houdini_docs_mkdown`.
+- [`chunker.py`](mdc:chunker.py): Responsible for processing the Markdown files, likely breaking them down into smaller, manageable chunks stored in `Chunked_Markdown`.
+

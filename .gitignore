@@ -1,0 +1,10 @@
+pdf_to_markdown/
+odforce_scrapMD/
+houdini_docs_*/
+Chunked_markdown/
+.venv/
+venv/
+houdiniDocsCrawler.zip
+*.zip
+data/
+__pycache__/
