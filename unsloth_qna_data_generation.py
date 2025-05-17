@@ -24,7 +24,9 @@ def init_generator(model_name="unsloth/Qwen3-4B-unsloth-bnb-4bit", max_seq_lengt
     generator.prepare_qa_generation(
         output_folder="data",
         temperature=0.7,
-        top_p=0.95,
+        top_p=0.8,
+        top_k=20,
+        min_p=0.0,
         overlap=64,
         max_generation_tokens=512,
     )
@@ -72,7 +74,7 @@ def process_chunks(generator, filenames, num_pairs_per_chunk=25):
         )
         time.sleep(2)  # Allow processing time
 
-def convert_to_qa_format(filenames):
+def convert_to_qa_format(generator, filenames):
     """Convert generated datasets into QA format."""
     for i, filename in enumerate(filenames):
         base_name = Path(filename).stem
@@ -133,7 +135,7 @@ def main():
     
     # Convert to QA format
     print("Converting to QA format...")
-    convert_to_qa_format(all_chunks)
+    convert_to_qa_format(generator, all_chunks)
     
     # Load and combine datasets
     print("Loading combined dataset...")
