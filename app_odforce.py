@@ -8,6 +8,9 @@ from collections import deque
 import logging
 import re
 import markdownify
+import asyncio
+import aiohttp
+from concurrent.futures import ThreadPoolExecutor
 
 # --- Configuration ---
 START_URL = "https://forums.odforce.net/"
@@ -128,84 +131,188 @@ def is_thread_page(soup):
     return bool(soup.find('article', class_=re.compile(r'ipsComment'))) and bool(soup.find('h1', class_=re.compile(r'ipsType_pageTitle')))
 
 # --- Main Crawling Logic ---
-def crawl_and_save(start_url, output_dir):
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-        logging.info(f"Created output directory: {output_dir}")
-    queue = deque([start_url])
-    visited_urls = {start_url}
-    processed_count = 0
-    error_count = 0
-    headers = {'User-Agent': USER_AGENT}
-    while queue:
-        current_url = queue.popleft()
-        logging.info(f"Processing URL ({len(visited_urls)} visited): {current_url}")
-        try:
-            response = requests.get(current_url, headers=headers, timeout=30)
+MAX_CONCURRENT_REQUESTS = 10 # Adjust as needed
+# The original REQUEST_DELAY was 0.5s. If we have 10 concurrent workers,
+# a small delay per worker helps, but the semaphore is the main rate controller.
+DELAY_PER_WORKER = 0.1 # Small delay within each worker task after a request.
+
+async def fetch_html(session, url, headers):
+    """Fetches HTML content from a URL asynchronously."""
+    try:
+        async with session.get(url, headers=headers, timeout=30) as response:
             response.raise_for_status()
             content_type = response.headers.get('content-type', '').lower()
             if 'text/html' not in content_type:
-                logging.info(f"Skipping non-HTML content: {current_url} ({content_type})")
-                continue
-            html_content = response.content.decode(response.apparent_encoding or 'utf-8', errors='ignore')
-        except requests.exceptions.Timeout:
-            logging.warning(f"Timeout fetching {current_url}. Skipping.")
-            error_count += 1
+                logging.info(f"Skipping non-HTML content: {url} ({content_type})")
+                return None, None
+            # Use response.read() to get bytes, then decode
+            html_bytes = await response.read()
+            # Determine encoding, fallback to utf-8
+            encoding = response.charset or 'utf-8'
+            html_content = html_bytes.decode(encoding, errors='ignore')
+            return html_content, url
+    except asyncio.TimeoutError:
+        logging.warning(f"Timeout fetching {url}. Skipping.")
+        return None, url
+    except aiohttp.ClientError as e:
+        logging.error(f"Failed to fetch {url}: {e}")
+        return None, url
+    except Exception as e:
+        logging.error(f"Unexpected error fetching {url}: {e}")
+        return None, url
+
+async def process_page_content(executor, html_content, current_url, output_dir, visited_urls_for_links, base_domain_for_links, base_path_for_links):
+    """
+    Processes HTML content: parses, saves if it's a thread page, and extracts new links.
+    Uses executor for CPU-bound (BeautifulSoup) and I/O-bound (file saving) tasks.
+    """
+    loop = asyncio.get_running_loop()
+    soup = await loop.run_in_executor(executor, BeautifulSoup, html_content, 'html.parser')
+
+    new_links_to_add = []
+    processed_successfully = False
+    saved_this_page = False
+
+    is_thread = await loop.run_in_executor(executor, is_thread_page, soup)
+    if is_thread:
+        post_title, post_md, comments_md = await loop.run_in_executor(executor, extract_post_and_comments, soup)
+        md_path = await loop.run_in_executor(executor, get_md_path, current_url, output_dir)
+
+        # Check existence in executor to avoid blocking
+        path_exists = await loop.run_in_executor(executor, os.path.exists, md_path)
+        if path_exists:
+            logging.info(f"Markdown already exists, skipping save: {md_path}")
+            saved_this_page = True # Considered "successful" for processing count
+        else:
+            saved_this_page = await loop.run_in_executor(executor, save_as_markdown, current_url, post_title, post_md, comments_md, md_path)
+    
+    processed_successfully = saved_this_page or not is_thread # Successful if saved or not a thread page to begin with
+
+    # Link extraction (can stay in async as soup is already parsed)
+    links_found_on_page = 0
+    for link in soup.find_all('a', href=True):
+        href = link['href']
+        # urljoin can be slow if called many times, but for now it's fine here.
+        # For extreme optimization, consider if it needs to be in executor.
+        absolute_url = urljoin(current_url, href)
+        absolute_url, _ = urldefrag(absolute_url)
+        parsed_absolute_url = urlparse(absolute_url)
+
+        if parsed_absolute_url.netloc != base_domain_for_links:
             continue
-        except requests.exceptions.RequestException as e:
-            logging.error(f"Failed to fetch {current_url}: {e}")
-            error_count += 1
+        if not parsed_absolute_url.path.startswith(base_path_for_links):
             continue
-        except Exception as e:
-            logging.error(f"Unexpected error fetching {current_url}: {e}")
-            error_count += 1
+        if parsed_absolute_url.scheme not in ['http', 'https']:
             continue
-        soup = BeautifulSoup(html_content, 'html.parser')
-        # --- Save as Markdown if thread page ---
-        if is_thread_page(soup):
-            post_title, post_md, comments_md = extract_post_and_comments(soup)
-            md_path = get_md_path(current_url, output_dir)
-            if os.path.exists(md_path):
-                logging.info(f"Markdown already exists, skipping save: {md_path}")
-            else:
-                if not save_as_markdown(current_url, post_title, post_md, comments_md, md_path):
-                    error_count += 1
-        processed_count += 1
-        # --- Find and Enqueue Links ---
-        links_found_on_page = 0
-        for link in soup.find_all('a', href=True):
-            href = link['href']
-            absolute_url = urljoin(current_url, href)
-            absolute_url, _ = urldefrag(absolute_url)
-            parsed_absolute_url = urlparse(absolute_url)
-            if parsed_absolute_url.netloc != BASE_DOMAIN:
-                continue
-            if not parsed_absolute_url.path.startswith(BASE_PATH):
-                continue
-            if parsed_absolute_url.scheme not in ['http', 'https']:
-                continue
-            if absolute_url in visited_urls:
-                continue
-            # Only enqueue thread and forum pages (not user profiles, etc)
-            # Thread URLs usually contain '/topic/'
-            if '/topic/' not in parsed_absolute_url.path and '/forum/' not in parsed_absolute_url.path:
-                continue
-            visited_urls.add(absolute_url)
-            queue.append(absolute_url)
-            links_found_on_page += 1
+        if absolute_url in visited_urls_for_links: # Check against the shared set
+            continue
+        if '/topic/' not in parsed_absolute_url.path and '/forum/' not in parsed_absolute_url.path:
+            continue
+        
+        new_links_to_add.append(absolute_url)
+        links_found_on_page += 1
+    
+    if links_found_on_page > 0:
         logging.info(f"Found {links_found_on_page} new links on {current_url}")
-        time.sleep(REQUEST_DELAY)
+
+    return new_links_to_add, processed_successfully
+
+
+async def worker(name, queue, session, headers, output_dir, visited_urls, semaphore, executor, base_domain, base_path, stats):
+    """Worker that fetches URLs from the queue, processes them, and adds new links back."""
+    while True:
+        try:
+            current_url = await queue.get()
+        except asyncio.CancelledError:
+            logging.info(f"Worker {name} cancelled.")
+            return # Exit if cancelled
+
+        if current_url is None: # Sentinel value to stop the worker
+            queue.put_nowait(None) # Put sentinel back for other workers
+            logging.info(f"Worker {name} received sentinel. Shutting down.")
+            break
+
+        async with semaphore: # Acquire semaphore before processing
+            logging.info(f"Worker {name} processing URL ({stats['visited_count']} visited): {current_url}")
+            
+            html_content, fetched_url = await fetch_html(session, current_url, headers)
+            
+            if html_content:
+                new_links, processed_page = await process_page_content(executor, html_content, current_url, output_dir, visited_urls, base_domain, base_path)
+                if processed_page:
+                    stats['processed_count'] += 1
+                else:
+                    stats['error_count'] += 1 # If save_as_markdown returned false or other processing issue
+
+                for link in new_links:
+                    if link not in visited_urls:
+                        visited_urls.add(link)
+                        stats['visited_count'] = len(visited_urls)
+                        await queue.put(link)
+            else:
+                stats['error_count'] += 1 # Error during fetch
+
+            # Polite delay
+            await asyncio.sleep(DELAY_PER_WORKER) 
+        
+        queue.task_done() # Signal that this queue item is done
+
+async def crawl_and_save(start_url, output_dir):
+    if not os.path.exists(output_dir):
+        # This initial os.makedirs can stay synchronous as it's a one-time setup
+        os.makedirs(output_dir)
+        logging.info(f"Created output directory: {output_dir}")
+
+    queue = asyncio.Queue()
+    visited_urls = {start_url} # Set to store all URLs ever added to the queue or visited
+    
+    await queue.put(start_url)
+
+    headers = {'User-Agent': USER_AGENT}
+    semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
+    # For CPU-bound (BeautifulSoup) and I/O-bound (file saving) tasks
+    executor = ThreadPoolExecutor(max_workers=MAX_CONCURRENT_REQUESTS * 2) # More threads for blocking tasks
+
+    # Shared statistics
+    stats = {'processed_count': 0, 'error_count': 0, 'visited_count': 1}
+    
+    # Determine base domain and path once
+    parsed_start_url = urlparse(start_url)
+    base_domain = parsed_start_url.netloc
+    base_path = parsed_start_url.path
+
+    async with aiohttp.ClientSession(headers=headers) as session:
+        tasks = []
+        for i in range(MAX_CONCURRENT_REQUESTS):
+            task = asyncio.create_task(worker(f"Worker-{i+1}", queue, session, headers, output_dir, visited_urls, semaphore, executor, base_domain, base_path, stats))
+            tasks.append(task)
+
+        # Wait for the queue to be fully processed
+        await queue.join() 
+        
+        # Signal workers to stop by putting None for each
+        for _ in range(MAX_CONCURRENT_REQUESTS):
+            await queue.put(None)
+
+        # Wait for all worker tasks to complete
+        await asyncio.gather(*tasks, return_exceptions=True) # Capture exceptions from workers if any
+
+    executor.shutdown(wait=True)
+
     logging.info(f"\n--- Crawl Finished ---")
-    logging.info(f"Total pages processed (attempted Markdown conversion): {processed_count}")
-    logging.info(f"Total unique URLs visited/added to queue: {len(visited_urls)}")
-    logging.info(f"Total errors encountered (fetch/Markdown): {error_count}")
+    logging.info(f"Total pages processed (attempted Markdown conversion): {stats['processed_count']}")
+    logging.info(f"Total unique URLs added to queue/visited: {stats['visited_count']}")
+    logging.info(f"Total errors encountered (fetch/Markdown/processing): {stats['error_count']}")
     logging.info(f"Markdown files saved in: {os.path.abspath(output_dir)}")
+
 
 # --- Main Execution ---
 if __name__ == "__main__":
     try:
-        crawl_and_save(START_URL, OUTPUT_DIR)
+        # Python 3.7+
+        asyncio.run(crawl_and_save(START_URL, OUTPUT_DIR))
     except KeyboardInterrupt:
         logging.info("\n--- Crawl Interrupted by User ---")
     except Exception as e:
+        # This will catch exceptions from crawl_and_save if not handled internally
         logging.exception("An unexpected error occurred during the crawl.")
