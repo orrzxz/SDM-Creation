@@ -1,0 +1,54 @@
+[
+  {
+    "doc_chunk": "Search Houdini 20.5 Houdini 20.5 HOUDINI help 20.5 Subtopics \u00b6 Getting started \u00b6 What\u2019s new in Houdini 20.5 New features and changes in Houdini 20.5 Installation And Licensing Installation and Licensing guide. Basics The basics of working with Houdini\u2019s user interface. Shelf tools How to use and customize the icons on the shelf at the top of the main window. Networks and parameters How to use the network and parameter editors to work in Houdini. Examples Example files showing how different nodes work. How to use the help How to use the online help and document your own tools. Using Houdini \u00b6 Geometry How Houdini represents geometry and how to create and edit it. Copying and instancing How to use copies (real geometry) and instances (loaded or created at render time). Animation How to create and keyframe animation in Houdini. Digital assets Digital assets let you create reusable nodes and tools from existing networks. Import and export How to get scene, object, and other data in and out of Houdini. MPlay viewer Using Houdini\u2019s stand-alone image viewer. Character FX \u00b6 Character How to rig and animate characters in Houdini. Crowd simulations How to create and simulate crowds of characters in Houdini. Muscles and tissue How to create and simulate muscles, tissue, and skin in Houdini. Hair and fur How to create, style, and add dynamics to hair and fur. Feathers How to create highly realistic and detailed feathers for your characters. Dynamics \u00b6 Dynamics How to use Houdini\u2019s dynamics networks to create simulations. Vellum Vellum uses a Position Based Dynamics approach to cloth, hair, grains, fluids, and softbody objects. Pyro How to simulate smoke, fire, and explosions. Fluids How to set up fluid and ocean simulations. Oceans and water surfaces How to set up ocean and water surface simulations. MPM How to simulate different types of solid materials (such as snow, soil, mud, concrete, metal, jello, rubber, water, honey, and sand). Destruction How to break different types o",
+    "qna": {
+      "question": "What is the difference between copies and instances in Houdini?",
+      "answer": "In Houdini, a **copy** is a real geometry duplication that is stored in the scene and modified independently. This means that changes to one copy will not affect others. On the other hand, an **instance** is a reference to a geometry that is loaded at render time. This is more efficient for large numbers of objects, as it doesn't store multiple copies of the same geometry in memory. Instances are ideal for things like trees, grass, or other repetitive elements where you want to reuse the same geometry without duplicating it in the scene.",
+      "source": "houdini_docs_mkdown/_root_index.md"
+    },
+    "source_document": "houdini_docs_mkdown/_root_index.md",
+    "topic_hierarchy": [
+      "_root_index.md"
+    ],
+    "generated_metadata": {
+      "model": "qwen3-4b-mlx",
+      "generation_params": {
+        "temperature": 0.7,
+        "base_max_tokens": 1024,
+        "adaptive_max_tokens": 1597,
+        "framework": "LM Studio API",
+        "concurrent_processing": true,
+        "total_models_used": 3,
+        "adaptive_token_strategy": "content_complexity_based"
+      }
+    },
+    "confidence_score": 1.0,
+    "related_questions": []
+  },
+  {
+    "doc_chunk": "Search Houdini 20.5 Credits The following people helped develop Houdini Aaron Hong, Aaron Severn, Abhishek Madan, Abigail Brady, Adam Jeziak, Aditya Raghavan, Adrian Saldanha, Adriano Bertucci, Ahmed Hassan, Aimee Johnson, Alan Mach, Alex Gurevich, Alex Lee, Alex Orgill, Alex Shelkovnykov, Alex Wai, Alexander Kaminsky, Alexander Shah, Alexandre Sirois-Vigneux, Ali Fatoorechi, Alicia Bremer, Alina Ivchenko, Alvin Dai, Amit Dubey, Amy Csiki, Ana Lee, Anatole Le, Andrew Alzner, Andrew Clinton, Andrew Rae, Andrew Wong, Andriy Mnih, Andy Styles, Angel Alladina, Angel Zhang, Anthony Tu, Arash Tirgari, Arjun Nair, Arshiya MollaZainali, Ashkan Yousefi, Asim Raza, Attila Torok, Aurora Huang, Barbara Macdonald, Bardia Sadri, Berj Bannayan, Bill Spitzak, Bob Cober, Bob Su, Bob Wei, Bradley Henke, Brendan Van Ryn, Brian Cort, Brian Sharpe, Brooke Amaranth, Calin Casian, Calvin Gu, Cameron White, Carol Wang, Cathy Penner, Charlie Fisher, Charlie Wang, Charles Bullingham, Chris AtLee, Chris McSpurren, Chris Rydalch, Chris Thompson, Christina Zhang, Christopher Grebeldinger, Christopher Janowksi, Christopher Knappers, Christopher Speller, Christopher Walker, Clement Yip, Cody Spahr, Coen Klosters, Craig Zerouni, Crawford Doran, Cristin Barghiel, Dale Ducharme, Damian Campeanu, Damien Pernuit, Dan Lee, Daniel Hau, Daniel Lemmond, Daniel McCormick, Daniel Yaroslavski, Daniel Zhang, David Cha, David Hua, David Jacewicz, David Pritchard, David Robert, David Wong, Dawei Sun, Debbie Tam, Denise Eng, Derek Norn, Derek Wu, Derrick Moser, Dian Xiang, Diana Huang, Dmytro Shynekvych, Edward Lam, Egor Larionov, Elaine Zhong, Eran Guendelman, Eric Huang, Eric Lawless, Erick Dransch, Erwin Heyms, Esther Trilsch, Ethan Dobrowolski, Filip Burlacu, Florence So, Frankie Rodriguez, Furqan Muhammad, Gabriel Robles Del Hierro, Garman Herigstad, Gary Lin, George ElKoura, Gerome Mortelecque, Glenn Tsang, Graham Thompson, Greg Hermanovic, Guan(Alex) Wang, Guillaume Laferriere, Hai Huang, H\u00e1lfdan Ingvarss",
+    "qna": {
+      "question": "Who are some of the key contributors to the development of Houdini 20.5?",
+      "answer": "Houdini 20.5 was developed with the help of a large team of contributors, including names like Aaron Hong, Aaron Severn, Abhishek Madan, and many others. The list includes professionals such as Adrian Saldanha, Ahmed Hassan, and Alex Gurevich, among hundreds of developers and artists who worked together to improve the software. This collaborative effort ensured that Houdini continued to evolve as a powerful tool for 3D animation, visual effects, and simulation.",
+      "source": "houdini_docs_mkdown/credits.md"
+    },
+    "source_document": "houdini_docs_mkdown/credits.md",
+    "topic_hierarchy": [
+      "credits.md"
+    ],
+    "generated_metadata": {
+      "model": "qwen3-4b-mlx:2",
+      "generation_params": {
+        "temperature": 0.7,
+        "base_max_tokens": 1024,
+        "adaptive_max_tokens": 1331,
+        "framework": "LM Studio API",
+        "concurrent_processing": true,
+        "total_models_used": 3,
+        "adaptive_token_strategy": "content_complexity_based"
+      }
+    },
+    "confidence_score": 1.0,
+    "related_questions": []
+  }
+]

@@ -1,9 +1,9 @@
 unsloth
-synthetic-data-kit
+#synthetic-data-kit
 datasets
 pandas
 marko
-transformers
+transformers>=4.0.0
 nltk
 scikit-learn
 torch
@@ -14,3 +14,10 @@ markdownify
 requests
 pdfkit
 beautifulsoup4
+sentencepiece
+bitsandbytes # for quantization
+accelerate # Often useful for optimizing transformer models
+vllm # For LLM serving and inference
+
+# Add any other specific libraries your chosen LLMs might require, for example:
+#auto-gptq # for quantization
